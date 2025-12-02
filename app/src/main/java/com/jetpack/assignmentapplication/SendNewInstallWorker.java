@@ -2,6 +2,7 @@ package com.jetpack.assignmentapplication;
 
 import android.content.Context;
 import android.provider.Settings;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.work.Data;
@@ -31,18 +32,23 @@ public class SendNewInstallWorker extends Worker {
     public Result doWork() {
         Context context = getApplicationContext();
 
+        Log.d("SendNewInstallWorker", "doWork started");
+
         String packageName = getInputData().getString(KEY_PACKAGE_NAME);
         if (packageName == null || packageName.isEmpty()) {
+            Log.d("SendNewInstallWorker", "No package name in input data");
             return Result.failure();
         }
 
         if (PreferencesManager.isPackageAlreadySent(context, packageName)) {
+            Log.d("SendNewInstallWorker", "Package already sent: " + packageName);
             return Result.success();
         }
 
         AppScanner scanner = new AppScanner(context);
         AppModel appModel = scanner.getAppForPackage(packageName);
         if (appModel == null) {
+            Log.d("SendNewInstallWorker", "App not found for package: " + packageName);
             return Result.failure();
         }
 
@@ -64,14 +70,19 @@ public class SendNewInstallWorker extends Worker {
                 ApiResponseModel body = response.body();
                 if (body != null && body.isSuccess()) {
                     PreferencesManager.markPackageSent(context, packageName);
+                    Log.d("SendNewInstallWorker", "Successfully sent new install for: " + packageName);
                     return Result.success();
                 } else {
+                    Log.d("SendNewInstallWorker", "API responded but success=false for: " + packageName);
                     return Result.retry();
                 }
             } else {
+                Log.d("SendNewInstallWorker", "HTTP error when sending new install for: " + packageName
+                        + ", code=" + response.code());
                 return Result.retry();
             }
         } catch (IOException e) {
+            Log.e("SendNewInstallWorker", "Network error when sending new install for: " + packageName, e);
             return Result.retry();
         }
     }

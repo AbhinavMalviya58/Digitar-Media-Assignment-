@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.work.Constraints;
 import androidx.work.NetworkType;
@@ -34,6 +35,8 @@ public class PackageAddedReceiver extends BroadcastReceiver {
         if (packageName == null || packageName.isEmpty()) {
             return;
         }
+
+        Log.d("PackageAddedReceiver", "New package installed: " + packageName);
 
         Constraints constraints = new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
